@@ -888,6 +888,14 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         PlayerAI* AI() const { return reinterpret_cast<PlayerAI*>(i_AI); }
 
         void CleanupsBeforeDelete(bool finalCleanup = true) override;
+		
+		//UniCore Additions
+		uint32 rank = 1;
+		bool uni_guardianAdded = false;
+
+		uint32 creatureKills = 0;
+		uint32 killCap = 20;
+		uint32 pvpKills = 0;
 
         void AddToWorld() override;
         void RemoveFromWorld() override;

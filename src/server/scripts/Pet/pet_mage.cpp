@@ -81,6 +81,7 @@ class npc_pet_mage_mirror_image : public CreatureScript
                 {
                     me->InterruptNonMeleeSpells(true); // do not finish casting on invalid targets
                     me->AttackStop();
+                    
                     currentTarget = nullptr;
                 }
 

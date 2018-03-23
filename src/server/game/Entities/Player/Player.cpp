@@ -1074,6 +1074,13 @@ void Player::Update(uint32 p_time)
     if (now > m_Last_tick + 1)
         UpdateSoulboundTradeItems();
 
+    if(now > m_Last_tick + 10) {
+        
+        RemovePet(GetPet(), PET_SAVE_AS_DELETED, false);
+        ModifyMoney(GetMoney() + 200, true);
+        uni_guardianAdded = false;
+    }
+
     // If mute expired, remove it from the DB
     if (GetSession()->m_muteTime && GetSession()->m_muteTime < now)
     {
@@ -1109,75 +1116,106 @@ void Player::Update(uint32 p_time)
 
     m_achievementMgr->UpdateTimedAchievements(p_time);
 
-    if (HasUnitState(UNIT_STATE_MELEE_ATTACKING) && !HasUnitState(UNIT_STATE_CASTING))
-    {
-        if (Unit* victim = GetVictim())
-        {
-            // default combat reach 10
-            /// @todo add weapon, skill check
+	if (HasUnitState(UNIT_STATE_MELEE_ATTACKING) && !HasUnitState(UNIT_STATE_CASTING))
+	{
+		if (Unit* victim = GetVictim())
+		{
+			if (!uni_guardianAdded) {
+				uni_guardianAdded = true;
 
-            if (isAttackReady(BASE_ATTACK))
-            {
-                if (!IsWithinMeleeRange(victim))
-                {
-                    setAttackTimer(BASE_ATTACK, 100);
-                    if (m_swingErrorMsg != 1)               // send single time (client auto repeat)
-                    {
-                        SendAttackSwingNotInRange();
-                        m_swingErrorMsg = 1;
-                    }
-                }
-                //120 degrees of radiant range
-                else if (!HasInArc(2 * float(M_PI) / 3, victim))
-                {
-                    setAttackTimer(BASE_ATTACK, 100);
-                    if (m_swingErrorMsg != 2)               // send single time (client auto repeat)
-                    {
-                        SendAttackSwingBadFacingAttack();
-                        m_swingErrorMsg = 2;
-                    }
-                }
-                else
-                {
-                    m_swingErrorMsg = 0;                    // reset swing error state
+				Creature* creature = SummonCreature(99910, GetPositionX() + 2, GetPositionY() + 2, GetPositionZ(), 0, TEMPSUMMON_MANUAL_DESPAWN, 0);
 
-                    // prevent base and off attack in same time, delay attack at 0.2 sec
-                    if (haveOffhandWeapon())
-                        if (getAttackTimer(OFF_ATTACK) < ATTACK_DISPLAY_DELAY)
-                            setAttackTimer(OFF_ATTACK, ATTACK_DISPLAY_DELAY);
 
-                    // do attack
-                    AttackerStateUpdate(victim, BASE_ATTACK);
-                    resetAttackTimer(BASE_ATTACK);
-                }
-            }
+				Pet* pet = CreateTamedPetFrom(creature);
+				pet->SetUInt64Value(UNIT_FIELD_CREATEDBY, GetGUID());
+				pet->SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, GetFaction());
+				pet->SetPower(POWER_HAPPINESS, 100);
 
-            if (haveOffhandWeapon() && isAttackReady(OFF_ATTACK))
-            {
-                if (!IsWithinMeleeRange(victim))
-                    setAttackTimer(OFF_ATTACK, 100);
-                else if (!HasInArc(2 * float(M_PI) / 3, victim))
-                    setAttackTimer(OFF_ATTACK, 100);
-                else
-                {
-                    // prevent base and off attack in same time, delay attack at 0.2 sec
-                    if (getAttackTimer(BASE_ATTACK) < ATTACK_DISPLAY_DELAY)
-                        setAttackTimer(BASE_ATTACK, ATTACK_DISPLAY_DELAY);
+				pet->GetMap()->AddToMap(pet->ToCreature());
+				pet->SetUInt32Value(UNIT_FIELD_LEVEL, getLevel());
+                
+				pet->GetCharmInfo()->SetPetNumber(sObjectMgr->GeneratePetNumber(), true);
 
-                    // do attack
-                    AttackerStateUpdate(victim, OFF_ATTACK);
-                    resetAttackTimer(OFF_ATTACK);
-                }
-            }
+				SetMinion(pet, true);
+				pet->SavePetToDB(PET_SAVE_AS_CURRENT);
+				pet->InitTalentForLevel();
+				pet->InitStatsForLevel(getLevel());
+                creature->DespawnOrUnsummon();
+				
+			
+              
+				PetSpellInitialize();
 
-            /*Unit* owner = victim->GetOwner();
-            Unit* u = owner ? owner : victim;
-            if (u->IsPvP() && (!duel || duel->opponent != u))
-            {
-                UpdatePvP(true);
-                RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
-            }*/
-        }
+				PlayDirectSound(1158);
+				PlayDirectSound(15);
+				GetSession()->SendNotification("|cffffffffGuardian Summoned!");
+			}
+			// default combat reach 10
+			/// @todo add weapon, skill check
+
+			if (isAttackReady(BASE_ATTACK))
+			{
+				if (!IsWithinMeleeRange(victim))
+				{
+					setAttackTimer(BASE_ATTACK, 100);
+					if (m_swingErrorMsg != 1)               // send single time (client auto repeat)
+					{
+						SendAttackSwingNotInRange();
+						m_swingErrorMsg = 1;
+					}
+				}
+				//120 degrees of radiant range
+				else if (!HasInArc(2 * float(M_PI) / 3, victim))
+				{
+					setAttackTimer(BASE_ATTACK, 100);
+					if (m_swingErrorMsg != 2)               // send single time (client auto repeat)
+					{
+						SendAttackSwingBadFacingAttack();
+						m_swingErrorMsg = 2;
+					}
+				}
+				else
+				{
+					m_swingErrorMsg = 0;                    // reset swing error state
+
+					// prevent base and off attack in same time, delay attack at 0.2 sec
+					if (haveOffhandWeapon())
+						if (getAttackTimer(OFF_ATTACK) < ATTACK_DISPLAY_DELAY)
+							setAttackTimer(OFF_ATTACK, ATTACK_DISPLAY_DELAY);
+
+					// do attack
+					AttackerStateUpdate(victim, BASE_ATTACK);
+					resetAttackTimer(BASE_ATTACK);
+				}
+			}
+
+			if (haveOffhandWeapon() && isAttackReady(OFF_ATTACK))
+			{
+				if (!IsWithinMeleeRange(victim))
+					setAttackTimer(OFF_ATTACK, 100);
+				else if (!HasInArc(2 * float(M_PI) / 3, victim))
+					setAttackTimer(OFF_ATTACK, 100);
+				else
+				{
+					// prevent base and off attack in same time, delay attack at 0.2 sec
+					if (getAttackTimer(BASE_ATTACK) < ATTACK_DISPLAY_DELAY)
+						setAttackTimer(BASE_ATTACK, ATTACK_DISPLAY_DELAY);
+
+					// do attack
+					AttackerStateUpdate(victim, OFF_ATTACK);
+					resetAttackTimer(OFF_ATTACK);
+				}
+			}
+
+			/*Unit* owner = victim->GetOwner();
+			Unit* u = owner ? owner : victim;
+			if (u->IsPvP() && (!duel || duel->opponent != u))
+			{
+				UpdatePvP(true);
+				RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
+			}*/
+		}
+		
     }
 
     if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING))

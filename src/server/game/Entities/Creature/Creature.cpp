@@ -748,8 +748,13 @@ void Creature::Update(uint32 diff)
                 {
                     if (m_suppressedTarget)
                     {
-                        if (WorldObject const* objTarget = ObjectAccessor::GetWorldObject(*this, m_suppressedTarget))
-                            SetFacingToObject(objTarget, false);
+						if (WorldObject const* objTarget = ObjectAccessor::GetWorldObject(*this, m_suppressedTarget)) {
+							SetFacingToObject(objTarget, false);
+
+							
+						}
+
+						
                     }
                     else
                         SetFacingTo(m_suppressedOrientation, false);
@@ -882,13 +887,13 @@ void Creature::Regenerate(Powers power)
         case POWER_FOCUS:
         {
             // For hunter pets.
-            addvalue = 24 * sWorld->getRate(RATE_POWER_FOCUS);
+            addvalue = 44 * sWorld->getRate(RATE_POWER_FOCUS);
             break;
         }
         case POWER_ENERGY:
         {
             // For deathknight's ghoul.
-            addvalue = 20;
+            addvalue = 40;
             break;
         }
         case POWER_MANA:

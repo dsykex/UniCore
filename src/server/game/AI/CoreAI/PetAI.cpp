@@ -340,6 +340,7 @@ void PetAI::_AttackStart(Unit* target)
         return;
 
     // Only chase if not commanded to stay or if stay but commanded to attack
+	DoCast(target, 11);
     DoAttack(target, (!me->GetCharmInfo()->HasCommandState(COMMAND_STAY) || me->GetCharmInfo()->IsCommandAttack()));
 }
 

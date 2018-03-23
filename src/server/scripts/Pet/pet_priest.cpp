@@ -66,9 +66,12 @@ class npc_pet_pri_shadowfiend : public CreatureScript
     public:
         npc_pet_pri_shadowfiend() : CreatureScript("npc_pet_pri_shadowfiend") { }
 
+        
+
         struct npc_pet_pri_shadowfiendAI : public PetAI
         {
             npc_pet_pri_shadowfiendAI(Creature* creature) : PetAI(creature) { }
+            
 
             void IsSummonedBy(Unit* summoner) override
             {

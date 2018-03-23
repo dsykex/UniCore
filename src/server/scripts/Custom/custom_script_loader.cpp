@@ -20,6 +20,14 @@
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
+
+void AddSC_uni_path_item();
+void AddSC_uni_player();
+void AddSC_uni_guardian();
+
 void AddCustomScripts()
 {
+    AddSC_uni_path_item();
+    AddSC_uni_guardian();
+    AddSC_uni_player();
 }
